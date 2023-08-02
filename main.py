@@ -4,6 +4,8 @@ import os
 import requests
 import base64
 import json
+from yt_dlp import YoutubeDL
+
 load_dotenv()
 
 CLIENT_ID = os.getenv("CLIENT_ID")
@@ -32,12 +34,19 @@ token = get_token()
 
 playlist_id = str(input("Enter the playlist link: ").split('/')[-1].strip())
 
+if len(playlist_id) > 22:
+    playlist_id = playlist_id.split("?")[0]
+
 headers = {
     "Authorization": "Bearer "+token
 }
 
 response = requests.get(f'https://api.spotify.com/v1/playlists/{playlist_id}/tracks',headers=headers)
+response_for_title = requests.get(f'https://api.spotify.com/v1/playlists/{playlist_id}',headers=headers)
 data = response.json()
+data_title = response_for_title.json()
+
+playlist_title = data_title['name']
 
 song_list = []
 artist_list = []
@@ -64,6 +73,15 @@ for song in songs:
     links.append(youtube_link)
 
 
+path = f"D:/Spotify Playlists/{playlist_title}"
+try:
+    os.mkdir(path=path)
+except FileExistsError:
+    print("File with this name already exists.")
+
+os.chdir(path)
+with YoutubeDL({'format': 'bestaudio'}) as ydl:
+    ydl.download(links)
 
 
 
